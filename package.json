@@ -1,0 +1,14 @@
+{
+  "name": "elm-gol",
+  "version": "1.0.0",
+  "description": "Game of Life in Elm",
+  "author": "Emil Soman",
+  "license": "MIT",
+  "devDependencies": {
+    "gulp": "3.9.1",
+    "gulp-elm": "0.4.1",
+    "gulp-plumber": "1.1.0",
+    "gulp-sass": "2.2.0",
+    "gulp-watch": "4.3.5"
+  }
+}
