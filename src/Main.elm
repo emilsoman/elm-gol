@@ -1,13 +1,11 @@
-import Debug
-import Graphics.Element exposing (..)
 import Window
+import Grid exposing (drawGrid, nextGrid)
+import SeedGenerator exposing (seedGrid)
+import Time
 
 cellSize = 30
-type alias Grid = List (List Bool)
-
--- Helper that debugs a signal
-debugSignal name signal =
-  Signal.map (Debug.watch name) signal
+frequency = Time.millisecond
+seed = 1989 -- The seed that represents the initial state of the grid
 
 -- Calculates the grid dimensions (in terms of cell count)
 -- based on the dimensions of the container
@@ -16,27 +14,25 @@ gridDimension =
   Window.dimensions
   |> Signal.map (\(w,h) -> ((w // cellSize), (h // cellSize)))
 
--- Returns the initial state of the Grid
---seed : Signal (Int, Int) -> Signal Grid
-seed : (Int, Int) -> Grid
-seed (w, h) =
-  List.repeat h (List.repeat w False)
+-- Generate the state of initial grid based on seed and the window dimensions
+getInitialSeed : Int -> Signal (Int, Int) -> Signal (List (List Bool))
+getInitialSeed seed windowDimension =
+  Signal.map (\(w,h) -> (seedGrid w h seed)) windowDimension
 
--- Given a state of the grid, draws an element
--- to represent its state
-drawGrid : Grid -> Element
-drawGrid grid =
-  show grid
+-- Gives the state of the new grid from its previous state
+step : List (List Bool) -> List (List Bool) -> List (List Bool)
+step currentGrid oldGrid =
+  if List.isEmpty oldGrid then currentGrid else (nextGrid oldGrid)
 
---Function that accepts a grid of boolean values
---and generates the next step in the lifetime of the grid
-step : Grid -> Grid
-step list =
-  list
+-- Emits the initial grid for every x unit of time
+tickingGrid : Signal (List (List Bool)) -> Signal (List (List Bool))
+tickingGrid grid =
+  Signal.sampleOn (Time.every frequency) grid
 
-main : Signal Element
+-- Renders the latest state of the grid
 main =
-  gridDimension
-  |> debugSignal "Gridsize"
-  |> Signal.map seed
-  |> Signal.map drawGrid
+  let
+    initialSeed = getInitialSeed seed gridDimension
+    grid = Signal.foldp step [] (tickingGrid initialSeed)
+  in
+  Signal.map (drawGrid cellSize) grid
